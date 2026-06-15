@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📝 Quiz Master</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --chalkboard: #1e3329;
+      --chalkboard-edge: #16261f;
+      --chalk-white: #f5f1e8;
+      --chalk-yellow: #ffd166;
+      --chalk-pink: #ff8fab;
+      --chalk-green: #8fd694;
+      --chalk-red: #ff7474;
+      --frame-wood: #c9a876;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2.5rem 1rem;
+      background: radial-gradient(ellipse at top, var(--chalkboard) 0%, var(--chalkboard-edge) 100%);
+      color: var(--chalk-white);
+    }
+
+    .board {
+      width: 100%;
+      max-width: 620px;
+      background: var(--chalkboard);
+      border: 10px solid var(--frame-wood);
+      border-radius: 6px;
+      padding: 2.5rem 2rem;
+      position: relative;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 60px rgba(0,0,0,0.35);
+    }
+
+    header { text-align: center; margin-bottom: 1.75rem; }
+
+    h1 {
+      font-family: 'Kalam', cursive;
+      font-size: 2.6rem;
+      color: var(--chalk-yellow);
+      text-shadow: 0 0 10px rgba(255, 209, 102, 0.25);
+    }
+
+    .underline-doodle { display: block; margin: 0.3rem auto 0; width: 180px; }
+
+    .subtitle { font-size: 0.9rem; opacity: 0.75; margin-top: 0.5rem; }
+
+    form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+    label { font-size: 0.85rem; opacity: 0.85; margin-bottom: 0.35rem; display: block; }
+
+    input[type="text"], select {
+      width: 100%;
+      background: transparent;
+      border: 2px dashed rgba(245, 241, 232, 0.35);
+      border-radius: 6px;
+      padding: 0.7rem 0.9rem;
+      color: var(--chalk-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--chalk-yellow);
+      background: rgba(255, 209, 102, 0.05);
+    }
+
+    input::placeholder { color: rgba(245, 241, 232, 0.4); }
+    select option { background: var(--chalkboard); color: var(--chalk-white); }
+
+    .row { display: flex; gap: 1rem; }
+    .row > div { flex: 1; }
+
+    button[type="submit"] {
+      margin-top: 0.5rem;
+      background: var(--chalk-yellow);
+      color: #2a2410;
+      border: none;
+      border-radius: 6px;
+      padding: 0.85rem 1.5rem;
+      font-family: 'Kalam', cursive;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    button[type="submit"]:hover:not(:disabled) {
+      transform: rotate(-1deg) scale(1.02);
+      box-shadow: 0 6px 16px rgba(255, 209, 102, 0.3);
+    }
+
+    button[type="submit"]:disabled { opacity: 0.6; cursor: wait; }
+
+    .error-msg { color: var(--chalk-red); font-size: 0.9rem; text-align: center; min-height: 1.2rem; margin-top: 0.75rem; }
+
+    .loading {
+      display: none;
+      text-align: center;
+      font-family: 'Kalam', cursive;
+      font-size: 1.1rem;
+      color: var(--chalk-yellow);
+      margin-top: 0.5rem;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+    #results { margin-top: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .quiz-card {
+      border: 2px dashed rgba(245, 241, 232, 0.25);
+      border-radius: 8px;
+      padding: 1.1rem 1.2rem;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .q-number { font-family: 'Kalam', cursive; color: var(--chalk-pink); font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .q-text { font-size: 1.02rem; margin-bottom: 0.85rem; line-height: 1.4; }
+
+    .options { display: flex; flex-direction: column; gap: 0.55rem; }
+
+    .option-btn {
+      text-align: left;
+      background: transparent;
+      border: 2px solid rgba(245, 241, 232, 0.2);
+      border-radius: 6px;
+      padding: 0.6rem 0.85rem;
+      color: var(--chalk-white);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .option-btn:hover { border-color: var(--chalk-yellow); }
+    .options.answered .option-btn { cursor: default; }
+    .options.answered .option-btn:hover { border-color: rgba(245, 241, 232, 0.2); }
+
+    .option-btn.correct { border-color: var(--chalk-green); background: rgba(143, 214, 148, 0.12); }
+    .option-btn.correct::after { content: " ✅"; }
+
+    .option-btn.wrong { border-color: var(--chalk-red); background: rgba(255, 116, 116, 0.12); }
+    .option-btn.wrong::after { content: " ❌"; }
+
+    .explanation { margin-top: 0.7rem; font-size: 0.85rem; opacity: 0.8; font-style: italic; }
+
+    .score-card {
+      text-align: center;
+      font-family: 'Kalam', cursive;
+      font-size: 1.4rem;
+      color: var(--chalk-yellow);
+      border: 2px dashed var(--chalk-yellow);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    @media (max-width: 480px) {
+      .board { padding: 1.75rem 1.25rem; }
+      h1 { font-size: 2.1rem; }
+      .row { flex-direction: column; gap: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <header>
+      <h1>📝 Quiz Master ✨</h1>
+      <svg class="underline-doodle" viewBox="0 0 180 12" xmlns="http://www.w3.org/2000/svg">
+        <path d="M2 8 C30 2, 60 12, 90 6 C120 0, 150 10, 178 4" stroke="#ffd166" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+      <p class="subtitle">Kisi bhi topic pe AI-powered quiz banao 🧠⚡</p>
+    </header>
+
+    <form id="quiz-form">
+      <div>
+        <label for="topic">Topic 🎯</label>
+        <input type="text" id="topic" placeholder="e.g. JavaScript, Cricket, History...">
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="difficulty">Difficulty</label>
+          <select id="difficulty">
+            <option value="easy">🟢 Easy</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="hard">🔴 Hard</option>
+          </select>
+        </div>
+        <div>
+          <label for="numQuestions">Questions</label>
+          <select id="numQuestions">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="8">8</option>
+            <option value="10">10</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" id="generate-btn">
+  ✨ Generate Quiz
+</button>
+    </form>
+
+    <p class="error-msg" id="error-msg"></p>
+    <p class="loading" id="loading">🤔 AI soch raha hai...</p>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    // ⚠️ Backend ka port yahi match hona chahiye jo server.js mein use kiya hai
+    const API_URL = 'http://localhost:3001/generate-quiz';
+
+    const form = document.getElementById('quiz-form');
+    const resultsEl = document.getElementById('results');
+    const errorEl = document.getElementById('error-msg');
+    const loadingEl = document.getElementById('loading');
+    const generateBtn = document.getElementById('generate-btn');
+
+    let currentQuiz = [];
+    let score = 0;
+    let answered = 0;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.textContent = '';
+      resultsEl.innerHTML = '';
+      score = 0;
+      answered = 0;
+
+      const topic = document.getElementById('topic').value.trim();
+      const difficulty = document.getElementById('difficulty').value;
+      const numQuestions = document.getElementById('numQuestions').value;
+
+      if (!topic) {
+        errorEl.textContent = '✏️ Topic toh likho pehle!';
+        return;
+      }
+
+      loadingEl.style.display = 'block';
+      generateBtn.disabled = true;
+      generateBtn.textContent = '🤔 Soch raha hoon...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, difficulty, numQuestions })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || 'Quiz generate nahi hua 😵');
+        }
+
+        const data = await res.json();
+        currentQuiz = data.questions;
+        renderQuiz(currentQuiz);
+
+      } catch (err) {
+        errorEl.textContent = `❌ ${err.message || 'Failed to fetch — backend chal raha hai check karo'}`;
+      } finally {
+        loadingEl.style.display = 'none';
+        generateBtn.disabled = false;
+        generateBtn.textContent = '✨ Quiz Banao';
+      }
+    });
+
+    function renderQuiz(questions) {
+      resultsEl.innerHTML = '';
+
+      questions.forEach((q, i) => {
+        const card = document.createElement('div');
+        card.className = 'quiz-card';
+
+        const optionsHtml = q.options
+          .map((opt, idx) => `<button class="option-btn" data-index="${idx}">${escapeHtml(opt)}</button>`)
+          .join('');
+
+        card.innerHTML = `
+          <p class="q-number">Sawaal ${i + 1} 🧠</p>
+          <p class="q-text">${escapeHtml(q.question)}</p>
+          <div class="options" data-correct="${q.correctIndex}" data-explanation="${escapeHtml(q.explanation || '')}">
+            ${optionsHtml}
+          </div>
+          <p class="explanation" style="display:none;"></p>
+        `;
+        resultsEl.appendChild(card);
+      });
+
+      document.querySelectorAll('.options').forEach((optionsDiv) => {
+        optionsDiv.addEventListener('click', (e) => {
+          const btn = e.target.closest('.option-btn');
+          if (!btn || optionsDiv.classList.contains('answered')) return;
+
+          const correctIndex = parseInt(optionsDiv.dataset.correct, 10);
+          const chosenIndex = parseInt(btn.dataset.index, 10);
+          const buttons = optionsDiv.querySelectorAll('.option-btn');
+
+          optionsDiv.classList.add('answered');
+          answered++;
+
+          buttons.forEach((b, idx) => {
+            if (idx === correctIndex) b.classList.add('correct');
+            if (idx === chosenIndex && idx !== correctIndex) b.classList.add('wrong');
+          });
+
+          if (chosenIndex === correctIndex) score++;
+
+          const explanationEl = optionsDiv.nextElementSibling;
+          if (optionsDiv.dataset.explanation) {
+            explanationEl.textContent = `💡 ${optionsDiv.dataset.explanation}`;
+            explanationEl.style.display = 'block';
+          }
+
+          if (answered === currentQuiz.length) {
+            showScore();
+          }
+        });
+      });
+    }
+
+    function showScore() {
+      const percent = Math.round((score / currentQuiz.length) * 100);
+      let emoji = '🌱';
+      if (percent === 100) emoji = '🏆';
+      else if (percent >= 70) emoji = '🌟';
+      else if (percent >= 40) emoji = '👍';
+
+      const scoreCard = document.createElement('div');
+      scoreCard.className = 'score-card';
+      scoreCard.innerHTML = `${emoji} Score: ${score} / ${currentQuiz.length} (${percent}%)`;
+      resultsEl.appendChild(scoreCard);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>
